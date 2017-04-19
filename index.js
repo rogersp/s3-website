@@ -1,8 +1,42 @@
+var path = require('path')
+
+// BEGIN - hijack path module methods to help with Windows paths
+// uses 'override-require' module to do so: https://www.npmjs.com/package/override-require
+// path module reference: https://nodejs.org/api/path.html
+var overrideRequire = require('override-require')
+// override 1: path separator
+path.sep = '/'
+// override 2: join() function
+path.join2 = path.join
+path.join = function(){    
+  var orig = path.join2.apply({}, arguments)      
+  var mod = orig.replace(/\\/g, path.sep)  
+  return mod
+}
+// override 3: relative() function
+path.relative2 = path.relative
+path.relative = function(){
+  var orig = path.relative2.apply({}, arguments)
+  var mod = orig.replace(/\\/g, path.sep)  
+  return mod
+}
+// define which modules to be overriden, and how they should be overridden
+var isOverride = function (request) {  
+  return request === 'path'  
+}
+var resolveRequest = function (request) {  
+  if (request === 'path')
+    return path      
+  console.error('request not expected for type: ', request);
+}
+// apply the overrides
+overrideRequire(isOverride, resolveRequest); 
+// END - hijack path module methods to help with Windows paths
+
 var AWS = require('aws-sdk')
 var defaults = require('merge-defaults')
 var assert = require('assert')
 var util = require('util')
-var path = require('path')
 var url = require('url')
 var cloudfront = require('cloudfront-tls')
 var diff = require('deep-diff').diff
